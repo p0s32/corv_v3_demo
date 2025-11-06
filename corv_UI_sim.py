@@ -1,10 +1,8 @@
-# app.py - CloudFlow Analytics Meta-Learning Platform Simulation
+# corv_UI_sim.py - CloudFlow Analytics Meta-Learning Platform Simulation
+# Dependency-free version using Streamlit native charts
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import time
 import random
@@ -92,149 +90,19 @@ def get_cloudflow_timeline_data():
         ]
     }
 
-def create_revenue_growth_chart():
-    """Create revenue growth simulation chart"""
-    timeline_data = get_cloudflow_timeline_data()
-    
-    # Combine data for chart
-    all_data = timeline_data['pre_ai_era'] + timeline_data['ai_transformation']
-    df = pd.DataFrame(all_data)
-    
-    # Add phase information
-    df['Phase'] = df['year'].apply(lambda x: 'Pre-AI Era' if x <= 2021 else 'AI Transformation')
-    
-    fig = px.line(df, x='year', y='revenue', 
-                  title='💰 CloudFlow Analytics Revenue Growth',
-                  labels={'revenue': 'Annual Revenue ($)', 'year': 'Year'},
-                  color='Phase',
-                  color_discrete_map={
-                      'Pre-AI Era': '#FF6B6B',
-                      'AI Transformation': '#4ECDC4'
-                  })
-    
-    # Add data point markers
-    fig.add_scatter(x=df['year'], y=df['revenue'], mode='markers+text',
-                   text=[f'${int(v/1000)}K' for v in df['revenue']],
-                   textposition="top center",
-                   marker_size=10)
-    
-    # Add AI implementation marker
-    fig.add_vline(x=2022, line_dash="dash", line_color="red", 
-                  annotation_text="Meta-Learning Implementation")
-    
-    fig.update_yaxis(tickformat='$,.0f')
-    fig.update_layout(height=400, showlegend=True)
-    
-    return fig
-
-def create_customer_metrics_chart():
-    """Create customer metrics simulation chart"""
+def create_revenue_data():
+    """Create revenue data for Streamlit charts"""
     timeline_data = get_cloudflow_timeline_data()
     all_data = timeline_data['pre_ai_era'] + timeline_data['ai_transformation']
     df = pd.DataFrame(all_data)
-    
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    
-    # Customer count
-    fig.add_trace(
-        go.Scatter(x=df['year'], y=df['customers'], 
-                  name='Customer Count', 
-                  line=dict(color='#4ECDC4', width=3),
-                  fill='tonexty'),
-        secondary_y=False,
-    )
-    
-    # Retention rate
-    fig.add_trace(
-        go.Scatter(x=df['year'], y=df['retention'], 
-                  name='Retention Rate (%)',
-                  line=dict(color='#FF6B6B', width=2, dash='dash')),
-        secondary_y=True,
-    )
-    
-    fig.update_xaxes(title_text="Year")
-    fig.update_yaxes(title_text="Customer Count", secondary_y=False)
-    fig.update_yaxes(title_text="Retention Rate (%)", secondary_y=True, tickformat='.0f')
-    
-    fig.update_layout(title='👥 Customer Growth & Retention Analysis', height=400)
-    
-    return fig
+    return df
 
-def create_transformation_impact_chart():
-    """Create transformation impact visualization"""
-    metrics = {
-        'Revenue Growth Rate': {'before': 15, 'after': 100},
-        'Customer Retention': {'before': 82, 'after': 89},
-        'Conversion Rate': {'before': 2.1, 'after': 3.5},
-        'Processing Efficiency': {'before': 0, 'after': 26}
-    }
-    
-    categories = list(metrics.keys())
-    before_values = [metrics[cat]['before'] for cat in categories]
-    after_values = [metrics[cat]['after'] for cat in categories]
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        name='Pre-Meta-Learning (2019-2021)',
-        x=categories,
-        y=before_values,
-        marker_color='#FF6B6B'
-    ))
-    
-    fig.add_trace(go.Bar(
-        name='Post-Meta-Learning (2022-2024)',
-        x=categories,
-        y=after_values,
-        marker_color='#4ECDC4'
-    ))
-    
-    fig.update_layout(
-        title='🔄 Meta-Learning Transformation Impact',
-        xaxis_title='Key Performance Metrics',
-        yaxis_title='Performance Level',
-        barmode='group',
-        height=400
-    )
-    
-    return fig
-
-def create_roi_projection_chart():
-    """Create ROI projection chart"""
-    years = [2022, 2023, 2024, 2025, 2026, 2027]
-    investment = [375000] + [0] * 5  # Initial investment only in 2022
-    returns = [3200000] * 6  # Annual returns
-    cumulative_roi = []
-    
-    total_investment = 375000
-    total_returns = 0
-    
-    for i, year in enumerate(years):
-        if year == 2022:
-            roi = -375000  # Initial investment
-        else:
-            roi = total_returns - total_investment
-        cumulative_roi.append(roi)
-        if year > 2022:
-            total_returns += 3200000
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        name='Cumulative ROI ($)',
-        x=[str(y) for y in years],
-        y=cumulative_roi,
-        marker_color=['#FF6B6B' if x < 0 else '#4ECDC4' for x in cumulative_roi]
-    ))
-    
-    fig.update_layout(
-        title='💰 ROI Projection Over Time',
-        xaxis_title='Year',
-        yaxis_title='Cumulative ROI ($)',
-        height=400
-    )
-    
-    return fig
+def create_customer_data():
+    """Create customer data for Streamlit charts"""
+    timeline_data = get_cloudflow_timeline_data()
+    all_data = timeline_data['pre_ai_era'] + timeline_data['ai_transformation']
+    df = pd.DataFrame(all_data)
+    return df
 
 def get_ai_responses():
     """Simulate AI responses based on CloudFlow Analytics context"""
@@ -498,18 +366,50 @@ def main():
             </div>
             """, unsafe_allow_html=True)
         
-        # Charts section
+        # Charts section - Using Streamlit native charts
         st.subheader("📈 Business Intelligence Analytics")
         
+        # Revenue chart using Streamlit
+        df = create_revenue_data()
+        st.line_chart(
+            df[['year', 'revenue']].set_index('year'),
+            use_container_width=True,
+            height=400
+        )
+        
+        # Customer and retention chart
         col1, col2 = st.columns(2)
         
         with col1:
-            st.plotly_chart(create_revenue_growth_chart(), use_container_width=True)
+            st.subheader("👥 Customer Growth")
+            st.line_chart(
+                df[['year', 'customers']].set_index('year'),
+                use_container_width=True,
+                height=300
+            )
         
         with col2:
-            st.plotly_chart(create_customer_metrics_chart(), use_container_width=True)
+            st.subheader("🎯 Retention Rate")
+            st.line_chart(
+                df[['year', 'retention']].set_index('year'),
+                use_container_width=True,
+                height=300
+            )
         
-        st.plotly_chart(create_transformation_impact_chart(), use_container_width=True)
+        # Comparison charts
+        st.subheader("📊 Pre vs Post AI Transformation")
+        
+        # Revenue comparison
+        pre_ai_revenue = [180000, 520000, 1200000]
+        post_ai_revenue = [2400000, 4800000, 8500000]
+        years = ['2019-2021', '2022-2024']
+        
+        comparison_data = pd.DataFrame({
+            'Pre-AI Era': [1200000],  # 2021 revenue
+            'Post-AI Era': [8500000]  # 2024 revenue
+        })
+        
+        st.bar_chart(comparison_data, use_container_width=True)
         
         # Recent insights
         st.subheader("🧠 Recent AI Insights")
@@ -536,6 +436,16 @@ def main():
             'Confidence': ['89%', '85%', '78%']
         })
         st.dataframe(forecast_data, use_container_width=True)
+        
+        # Forecast chart
+        forecast_years = ['2024', '2025', '2026', '2027']
+        forecast_revenue = [8500000, 14200000, 22600000, 34200000]
+        
+        st.line_chart(
+            pd.DataFrame({'Revenue': forecast_revenue}, index=forecast_years),
+            use_container_width=True,
+            height=400
+        )
         
         # Customer growth forecast
         st.subheader("👥 Customer Growth Projection")
@@ -585,7 +495,12 @@ def main():
                 st.info(f"Investment Required: {opp['investment']}")
         
         # ROI projections
-        st.plotly_chart(create_roi_projection_chart(), use_container_width=True)
+        st.subheader("💰 ROI Projection")
+        roi_years = ['2022', '2023', '2024', '2025', '2026', '2027']
+        roi_values = [-375000, 2825000, 6025000, 9225000, 12425000, 15625000]
+        
+        roi_df = pd.DataFrame({'Cumulative ROI': roi_values}, index=roi_years)
+        st.line_chart(roi_df, use_container_width=True, height=300)
     
     with tab3:
         st.header("🤖 AI Business Analyst")
@@ -602,36 +517,36 @@ def main():
         with col1:
             if st.button("📊 Revenue Analysis", key="revenue_analysis"):
                 st.markdown(f"""
-                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4;'>
+                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4; max-height: 600px; overflow-y: auto;'>
                     <h4>🤖 AI Analysis: Revenue Drivers</h4>
-                    {ai_responses['revenue_analysis']['response']}
+                    <pre style='white-space: pre-wrap; font-family: inherit;'>{ai_responses['revenue_analysis']['response']}</pre>
                 </div>
                 """, unsafe_allow_html=True)
         
         with col2:
             if st.button("👥 Customer Strategy", key="customer_strategy"):
                 st.markdown(f"""
-                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4;'>
+                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4; max-height: 600px; overflow-y: auto;'>
                     <h4>🤖 AI Analysis: Customer Retention</h4>
-                    {ai_responses['customer_strategy']['response']}
+                    <pre style='white-space: pre-wrap; font-family: inherit;'>{ai_responses['customer_strategy']['response']}</pre>
                 </div>
                 """, unsafe_allow_html=True)
         
         with col3:
             if st.button("🤖 AI Impact", key="ai_impact"):
                 st.markdown(f"""
-                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4;'>
+                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4; max-height: 600px; overflow-y: auto;'>
                     <h4>🤖 AI Analysis: Transformation Impact</h4>
-                    {ai_responses['ai_impact']['response']}
+                    <pre style='white-space: pre-wrap; font-family: inherit;'>{ai_responses['ai_impact']['response']}</pre>
                 </div>
                 """, unsafe_allow_html=True)
         
         with col4:
             if st.button("💰 ROI Analysis", key="roi_analysis"):
                 st.markdown(f"""
-                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4;'>
+                <div style='background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 5px solid #4ECDC4; max-height: 600px; overflow-y: auto;'>
                     <h4>🤖 AI Analysis: ROI Breakdown</h4>
-                    {ai_responses['roi_analysis']['response']}
+                    <pre style='white-space: pre-wrap; font-family: inherit;'>{ai_responses['roi_analysis']['response']}</pre>
                 </div>
                 """, unsafe_allow_html=True)
         
