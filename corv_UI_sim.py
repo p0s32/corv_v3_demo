@@ -364,7 +364,7 @@ def main():
     <div style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; padding: 2rem; border-radius: 10px; text-align: center; margin: 2rem 0;">
         <h2 style="margin: 0 0 1rem 0;">Ready to Unlock Your $6.4M Opportunity?</h2>
         <p style="margin: 0 0 1.5rem 0; opacity: 0.9;">
-            Full System: $12,000 (50% prototype credit) | Tier 1: $2,000/month<br>
+            Full System: $12,000 (20% prototype credit) | Tier 1: $2,000/month<br>
             Hourly updates • AI predictions • Action plans • ROI guarantee
         </p>
         <a href="mailto:hello@corv.ai?subject=Full Build Request" style="text-decoration: none;">
