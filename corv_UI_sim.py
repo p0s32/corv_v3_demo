@@ -105,33 +105,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data
+@st.cache_data
 def load_coffee_data():
     """Generate realistic fake data for BrewTech Coffee Co."""
     np.random.seed(42)
     
     financials = {
-        'total_revenue': 14_800_000,  # Coffee company smaller than SaaS
-        'annual_losses': 2_100_000,   # More realistic losses
+        'total_revenue': 14_800_000,
+        'annual_losses': 2_100_000,
         'revenue_opportunities': 5_200_000,
-        'net_roi': 2.8  # Slightly lower than SaaS
+        'net_roi': 2.8
     }
     
     # US States Performance
     states_data = pd.DataFrame({
         'State': ['California', 'New York', 'Texas', 'Florida', 'Washington', 'Colorado', 'Illinois', 'Massachusetts'],
-        'Revenue': [2.1, 1.8, 1.2, 1.1, 0.9, 0.8, 0.7, 0.6],  # $M
-        'Growth': [8.5, 12.1, -3.2, 6.8, 15.3, 18.7, 2.4, 11.9]  # Some negative growth
+        'Revenue': [2.1, 1.8, 1.2, 1.1, 0.9, 0.8, 0.7, 0.6],
+        'Growth': [8.5, 12.1, -3.2, 6.8, 15.3, 18.7, 2.4, 11.9]
     })
     
-    # Coffee Business Segments Explained:
-    # - Enterprise: Large offices/hotels buying 50+ machines
-    # - Mid-Market: Small chains/bistros buying 5-49 machines  
-    # - SMB: Individual cafes/bars buying 1-4 machines
+    # Customer Segments
     churn_segments = pd.DataFrame({
         'Segment': ['Enterprise (50+ machines)', 'Mid-Market (5-49 machines)', 'SMB (1-4 machines)'],
         'Customers': [89, 342, 1200],
-        'Churn_Rate': [3.1, 9.8, 24.7],  # Realistic tiered churn
-        'Impact': [180_000, 650_000, 1_270_000],  # Dollar impact
+        'Churn_Rate': [3.1, 9.8, 24.7],
+        'Impact': [180_000, 650_000, 1_270_000],
         'Description': [
             'Large contracts, low churn, high value',
             'Growing segment, moderate retention risk', 
@@ -142,8 +140,8 @@ def load_coffee_data():
     # Coffee Product Lines
     products = pd.DataFrame({
         'Product': ['Commercial Espresso Machine', 'Pod Subscription (Monthly)', 'Home Brewer', 'Premium Coffee Pods'],
-        'Margin': [45, 68, 35, 52],  # Realistic coffee margins
-        'Revenue': [3.2, 5.1, 1.8, 2.4],  # Subscription is biggest
+        'Margin': [45, 68, 35, 52],
+        'Revenue': [3.2, 5.1, 1.8, 2.4],
         'Description': [
             'One-time equipment sales ($4K-$12K per unit)',
             'Recurring revenue - 72% of business',
@@ -152,49 +150,42 @@ def load_coffee_data():
         ]
     })
     
-    # Monthly trends with more volatility
+    # Monthly trends - FIXED: Ensure exact 12 months
     dates = pd.date_range('2023-07-01', periods=12, freq='M')
-    # Add some volatility to make it realistic
-    base_revenue = 1.1
-    revenue_trend = []
-    churn_trend = []
     
-    for i in range(12):
-        # Revenue: general uptrend but with dips
-        if i in [2, 6, 9]:  # Quarter-end dips
-            rev = base_revenue + (i * 0.08) - 0.15
-        else:
-            rev = base_revenue + (i * 0.08) + np.random.normal(0, 0.03)
-        revenue_trend.append(round(rev, 2))
-        
-        # Churn: starts high, improves, then spikes
-        if i == 0:  # July baseline
-            churn = 0.042
-        elif i == 1:  # August spike (summer vacation = cafe closures)
-            churn = 0.058  # Big spike!
-        elif i == 2:  # September correction
-            churn = 0.048
-        elif i == 3:  # October improvement
-            churn = 0.039
-        elif i == 4:  # November stability
-            churn = 0.038
-        elif i == 5:  # December holiday spike
-            churn = 0.051  # Holiday closures
-        elif i == 6:  # January recovery
-            churn = 0.042
-        elif i == 7:  # February steady
-            churn = 0.041
-        elif i == 8:  # March small uptick
-            churn = 0.044
-        elif i == 9:  # April dip (renewals)
-            churn = 0.036
-        elif i == 10:  # May gradual rise
-            churn = 0.039
-        else:  # June pre-summer anxiety
-            churn = 0.043
+    # Revenue trend (12 values)
+    revenue_trend = [
+        1.10,  # Jul 2023
+        1.18,  # Aug 2023
+        1.15,  # Sep 2023 (quarter-end dip)
+        1.25,  # Oct 2023
+        1.32,  # Nov 2023
+        1.28,  # Dec 2023 (holiday dip)
+        1.35,  # Jan 2024
+        1.42,  # Feb 2024
+        1.48,  # Mar 2024
+        1.45,  # Apr 2024 (slight dip)
+        1.52,  # May 2024
+        1.58   # Jun 2024
+    ]
     
-    churn_trend.append(round(churn, 3))
+    # Churn trend (12 values) - with realistic spikes
+    churn_trend = [
+        0.042,  # Jul 2023 (baseline)
+        0.058,  # Aug 2023 (summer spike!)
+        0.048,  # Sep 2023 (still elevated)
+        0.039,  # Oct 2023 (recovery)
+        0.038,  # Nov 2023 (stable)
+        0.051,  # Dec 2023 (holiday spike)
+        0.042,  # Jan 2024 (recovery)
+        0.041,  # Feb 2024 (steady)
+        0.044,  # Mar 2024 (small uptick)
+        0.036,  # Apr 2024 (best month)
+        0.039,  # May 2024 (gradual rise)
+        0.043   # Jun 2024 (pre-summer)
+    ]
     
+    # Create DataFrame - NOW ALL LISTS ARE EXACTLY 12 ELEMENTS
     trend_data = pd.DataFrame({
         'Month': [d.strftime('%b %Y') for d in dates],
         'Revenue': revenue_trend,
