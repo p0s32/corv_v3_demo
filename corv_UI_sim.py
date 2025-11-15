@@ -4,7 +4,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-import time
 
 # Page config
 st.set_page_config(
@@ -13,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Premium dark blue & white styling
+# Clean dark blue & white styling
 st.markdown("""
 <style>
     .main-header {
@@ -22,7 +21,6 @@ st.markdown("""
         padding: 1.5rem;
         border-radius: 10px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .main-title {
         font-size: 2rem;
@@ -92,6 +90,13 @@ st.markdown("""
         text-align: center;
         margin: 1rem 0;
     }
+    .segment-help {
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 6px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }
     @media (max-width: 768px) {
         .metric-container { flex-direction: column; }
         .main-title { font-size: 1.5rem; }
@@ -100,95 +105,103 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data
-def load_fake_data():
-    """Generate realistic fake data for TechRetail Co."""
+def load_coffee_data():
+    """Generate realistic fake data for BrewTech Coffee Co."""
     np.random.seed(42)
     
-    # Core metrics
     financials = {
-        'total_revenue': 18_200_000,
-        'annual_losses': 2_800_000,
-        'revenue_opportunities': 6_400_000,
-        'net_roi': 3.2
+        'total_revenue': 14_800_000,  # Coffee company smaller than SaaS
+        'annual_losses': 2_100_000,   # More realistic losses
+        'revenue_opportunities': 5_200_000,
+        'net_roi': 2.8  # Slightly lower than SaaS
     }
     
-    # Regional performance
-    regions = ['North America', 'Europe', 'APAC', 'Latin America']
-    revenue_by_region = pd.DataFrame({
-        'Region': regions,
-        'Revenue': [9.8, 4.2, 2.8, 1.4],
-        'Growth': [12.5, 8.3, 19.7, 15.2]
+    # US States Performance
+    states_data = pd.DataFrame({
+        'State': ['California', 'New York', 'Texas', 'Florida', 'Washington', 'Colorado', 'Illinois', 'Massachusetts'],
+        'Revenue': [2.1, 1.8, 1.2, 1.1, 0.9, 0.8, 0.7, 0.6],  # $M
+        'Growth': [8.5, 12.1, -3.2, 6.8, 15.3, 18.7, 2.4, 11.9]  # Some negative growth
     })
     
-    # Churn analysis
-    churn_data = pd.DataFrame({
-        'Segment': ['Enterprise', 'Mid-Market', 'SMB'],
-        'Customers': [145, 890, 3200],
-        'Churn_Rate': [4.2, 12.8, 28.6],
-        'Impact': [280_000, 1_200_000, 1_320_000]
+    # Coffee Business Segments Explained:
+    # - Enterprise: Large offices/hotels buying 50+ machines
+    # - Mid-Market: Small chains/bistros buying 5-49 machines  
+    # - SMB: Individual cafes/bars buying 1-4 machines
+    churn_segments = pd.DataFrame({
+        'Segment': ['Enterprise (50+ machines)', 'Mid-Market (5-49 machines)', 'SMB (1-4 machines)'],
+        'Customers': [89, 342, 1200],
+        'Churn_Rate': [3.1, 9.8, 24.7],  # Realistic tiered churn
+        'Impact': [180_000, 650_000, 1_270_000],  # Dollar impact
+        'Description': [
+            'Large contracts, low churn, high value',
+            'Growing segment, moderate retention risk', 
+            'High volume, high churn, subscription dependent'
+        ]
     })
     
-    # Product performance
+    # Coffee Product Lines
     products = pd.DataFrame({
-        'Product': ['Core Platform', 'Analytics Add-on', 'API Suite', 'Support'],
-        'Margin': [68, 82, 75, 45],
-        'Revenue': [8.5, 2.1, 1.9, 0.8]
+        'Product': ['Commercial Espresso Machine', 'Pod Subscription (Monthly)', 'Home Brewer', 'Premium Coffee Pods'],
+        'Margin': [45, 68, 35, 52],  # Realistic coffee margins
+        'Revenue': [3.2, 5.1, 1.8, 2.4],  # Subscription is biggest
+        'Description': [
+            'One-time equipment sales ($4K-$12K per unit)',
+            'Recurring revenue - 72% of business',
+            'Lower-cost home units ($150-$400)',
+            'High-margin consumables'
+        ]
     })
     
-    # Monthly trend (last 12 months)
+    # Monthly trends with more volatility
     dates = pd.date_range('2023-07-01', periods=12, freq='M')
+    # Add some volatility to make it realistic
+    base_revenue = 1.1
+    revenue_trend = []
+    churn_trend = []
+    
+    for i in range(12):
+        # Revenue: general uptrend but with dips
+        if i in [2, 6, 9]:  # Quarter-end dips
+            rev = base_revenue + (i * 0.08) - 0.15
+        else:
+            rev = base_revenue + (i * 0.08) + np.random.normal(0, 0.03)
+        revenue_trend.append(round(rev, 2))
+        
+        # Churn: starts high, improves, then spikes
+        if i < 4:
+            churn = 0.045 - (i * 0.003)  # Improving initially
+        elif i in [7, 8]:  # Summer spike
+            churn = 0.032 + 0.012
+        else:
+            churn = 0.032 - ((i-8) * 0.001)  # Gradual improvement
+        churn_trend.append(round(churn, 3))
+    
     trend_data = pd.DataFrame({
         'Month': [d.strftime('%b %Y') for d in dates],
-        'Revenue': [1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3],
-        'Churn': [0.045, 0.043, 0.041, 0.040, 0.039, 0.038, 0.037, 0.036, 0.035, 0.034, 0.033, 0.032]
+        'Revenue': revenue_trend,
+        'Churn': churn_trend
     })
     
-    return financials, revenue_by_region, churn_data, products, trend_data
-
-def create_gauge(value, title, min_val=0, max_val=100, color="#1e3a8a"):
-    """Create a professional gauge chart."""
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': title, 'font': {'size': 14}},
-        gauge={
-            'axis': {'range': [min_val, max_val]},
-            'bar': {'color': color},
-            'steps': [
-                {'range': [min_val, max_val*0.7], 'color': "#f8fafc"},
-                {'range': [max_val*0.7, max_val*0.9], 'color': "#fef3c7"},
-                {'range': [max_val*0.9, max_val], 'color': "#dcfce7"}
-            ],
-            'threshold': {
-                'line': {'color': "#ef4444", 'width': 3},
-                'thickness': 0.75,
-                'value': max_val * 0.8
-            }
-        }
-    ))
-    fig.update_layout(height=250, margin=dict(l=20, r=20, t=40, b=20))
-    return fig
+    return financials, states_data, churn_segments, products, trend_data
 
 def main():
     # Header
     st.markdown("""
     <div class="main-header">
         <h1 class="main-title">Corv Prosperity Engine</h1>
-        <p class="subtitle">TechRetail Co. | Hidden Revenue Analysis | Next Update: 02:15:30</p>
+        <p class="subtitle">BrewTech Coffee Co. | Hidden Revenue Analysis | Enterprise Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
     
     # Live Update Ticker
-    next_update = datetime.now() + timedelta(hours=1)
     st.markdown(f"""
     <div class="update-ticker">
-    🕐 Live Analysis | Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | Next Update: {next_update.strftime('%H:%M:%S')}
+    🕐 Live Analysis | Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | Next Update: {datetime.now() + timedelta(hours=1):%H:%M}
     </div>
     """, unsafe_allow_html=True)
     
     # Load data
-    financials, revenue_by_region, churn_data, products, trend_data = load_fake_data()
+    financials, states_data, churn_segments, products, trend_data = load_coffee_data()
     
     # Key Metrics
     st.markdown('<h3 style="color: #0f172a; margin: 1rem 0;">Financial Impact Overview</h3>', unsafe_allow_html=True)
@@ -227,38 +240,54 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     
-    # Two-column layout for charts
+    # Charts
     col_left, col_right = st.columns([2, 1])
     
     with col_left:
-        st.markdown('<div class="chart-header">Revenue Performance by Region</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-header">Revenue Performance by State</div>', unsafe_allow_html=True)
         fig_rev = px.bar(
-            revenue_by_region,
-            x='Region',
+            states_data,
+            x='State',
             y='Revenue',
             color='Growth',
-            color_continuous_scale='Blues',
+            color_continuous_scale=['red', 'yellow', 'green'],  # Red=negative, Green=positive
             labels={'Revenue': 'Revenue ($M)', 'Growth': 'Growth (%)'},
-            text=[f'${v:.1f}M' for v in revenue_by_region['Revenue']]
+            text=[f'${v:.1f}M' for v in states_data['Revenue']]
         )
         fig_rev.update_traces(textposition='outside')
         fig_rev.update_layout(height=350, showlegend=False)
         st.plotly_chart(fig_rev, use_container_width=True)
         
-        st.markdown('<div class="chart-header">Monthly Trend Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-header">Revenue vs Churn Trends</div>', unsafe_allow_html=True)
         fig_trend = px.line(
             trend_data,
             x='Month',
             y=['Revenue', 'Churn'],
-            title='Revenue Growth vs Churn Rate (Last 12 Months)'
+            title='Monthly Performance (Note: Churn spikes in summer months)'
         )
-        fig_trend.update_layout(height=300, yaxis2=dict(overlaying='y', side='right'))
+        fig_trend.update_layout(height=300, yaxis=dict(tickformat=".1%"))
+        # Add annotation for churn spike
+        fig_trend.add_annotation(x="Aug 2023", y=0.044, text="Summer churn spike", 
+                                showarrow=True, arrowhead=1, arrowsize=1, arrowwidth=2)
         st.plotly_chart(fig_trend, use_container_width=True)
     
     with col_right:
         st.markdown('<div class="chart-header">Churn Risk Analysis</div>', unsafe_allow_html=True)
+        
+        # Explain segments first
+        st.markdown('<div class="segment-help">', unsafe_allow_html=True)
+        st.write("**Customer Segments Explained:**")
+        for _, row in churn_segments.iterrows():
+            with st.expander(f"{row['Segment']}"):
+                st.write(f"**Customers:** {row['Customers']:,}")
+                st.write(f"**Churn Rate:** {row['Churn_Rate']}%")
+                st.write(f"**Annual Impact:** ${row['Impact']:,}")
+                st.write(f"**Profile:** {row['Description']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Churn pie chart
         fig_churn = px.pie(
-            churn_data,
+            churn_segments,
             values='Customers',
             names='Segment',
             hole=0.4,
@@ -269,34 +298,46 @@ def main():
         st.plotly_chart(fig_churn, use_container_width=True)
         
         st.markdown('<div class="chart-header">Data Quality Score</div>', unsafe_allow_html=True)
-        st.plotly_chart(create_gauge(82, "Quality %", 0, 100, "#1e3a8a"), use_container_width=True)
+        quality_score = 79
+        st.metric("Quality Score", f"{quality_score}%")
+        st.progress(quality_score / 100)
+        st.caption("21% improvement potential after data cleanup")
     
     # Product Analysis
-    st.markdown('<h3 style="color: #0f172a; margin: 2rem 0 1rem 0;">Product Profitability Analysis</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #0f172a; margin: 2rem 0 1rem 0;">Product Line Profitability</h3>', unsafe_allow_html=True)
     
     col_p1, col_p2 = st.columns(2)
     
     with col_p1:
+        st.markdown('<div class="chart-header">Profit Margins by Product</div>', unsafe_allow_html=True)
         fig_margin = px.bar(
             products,
             x='Product',
             y='Margin',
-            title='Profit Margins by Product (%)',
+            title='Gross Margins Across Product Lines',
             color='Margin',
-            color_continuous_scale='Blues'
+            color_continuous_scale=['red', 'orange', 'green'],
+            text=[f'{v}%' for v in products['Margin']]
         )
-        fig_margin.update_layout(height=300, coloraxis_showscale=False)
+        fig_margin.update_traces(textposition='outside')
+        fig_margin.update_layout(height=350, coloraxis_showscale=False, xaxis_tickangle=-45)
         st.plotly_chart(fig_margin, use_container_width=True)
+        
+        # Product explanations
+        st.markdown("**Product Context:**")
+        for _, row in products.iterrows():
+            st.write(f"**{row['Product']}:** {row['Description']}")
     
     with col_p2:
+        st.markdown('<div class="chart-header">Revenue Distribution</div>', unsafe_allow_html=True)
         fig_rev_prod = px.pie(
             products,
             values='Revenue',
             names='Product',
-            title='Revenue Distribution by Product',
+            title='Revenue Share by Product Line',
             color_discrete_sequence=['#1e3a8a', '#3b82f6', '#60a5fa', '#93c5fd']
         )
-        fig_rev_prod.update_layout(height=300)
+        fig_rev_prod.update_layout(height=350)
         st.plotly_chart(fig_rev_prod, use_container_width=True)
     
     # Insights
@@ -308,9 +349,9 @@ def main():
         st.markdown("""
         <div class="insight-box">
             <strong>Revenue Leakage:</strong><br>
-            • EU region underperforming by 18% vs potential<br>
-            • SMB churn rate at 28.6% costing $1.32M annually<br>
-            • Pricing optimization could recover +$1.8M
+            • Texas showing -3.2% growth (underperforming market)<br>
+            • SMB churn at 24.7% costing $1.27M annually<br>
+            • Pod subscription renewal process needs automation
         </div>
         """, unsafe_allow_html=True)
     
@@ -318,9 +359,9 @@ def main():
         st.markdown("""
         <div class="insight-box">
             <strong>Growth Opportunities:</strong><br>
-            • Analytics add-on has 82% margin potential<br>
-            • API Suite adoption up 19.7% in APAC<br>
-            • Data cleanup could improve accuracy by 24%
+            • Pod subscriptions have 68% margin (scale this!)<br>
+            • West Coast expansion potential (+15% in WA, CA)<br>
+            • Enterprise machine sales pipeline needs investment
         </div>
         """, unsafe_allow_html=True)
     
@@ -331,43 +372,45 @@ def main():
     
     with col_s1:
         churn_reduction = st.slider(
-            "Churn Reduction Target (%)",
-            min_value=0.0,
-            max_value=15.0,
-            value=5.0,
-            step=0.5
-        )
-        churn_uplift = int(churn_reduction * 210_000)
-        st.metric(
-            "Projected Annual Uplift",
-            f"${churn_uplift:,}",
-            delta=f"{churn_reduction}% reduction"
-        )
-    
-    with col_s2:
-        pricing_increase = st.slider(
-            "Pricing Optimization (%)",
+            "Reduce SMB Churn Rate (%)",
             min_value=0.0,
             max_value=12.0,
             value=4.0,
-            step=0.5
+            step=0.5,
+            help="Target high-churn segment with automated renewals"
         )
-        price_uplift = int(pricing_increase * 150_000)
+        churn_uplift = int(churn_reduction * 105_000)  # Coffee-specific multiplier
         st.metric(
-            "Revenue Optimization",
-            f"${price_uplift:,}",
-            delta=f"{pricing_increase}% adjustment"
+            "Projected Annual Uplift",
+            f"${churn_uplift:,}",
+            delta=f"{churn_reduction}% churn reduction"
+        )
+    
+    with col_s2:
+        subscription_increase = st.slider(
+            "Increase Pod Subscription Rate (%)",
+            min_value=0.0,
+            max_value=15.0,
+            value=6.0,
+            step=0.5,
+            help="Upsell existing customers to higher-tier subscriptions"
+        )
+        sub_uplift = int(subscription_increase * 32_000)
+        st.metric(
+            "Subscription Revenue Boost",
+            f"${sub_uplift:,}",
+            delta=f"{subscription_increase}% expansion"
         )
     
     # CTA Section
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; padding: 2rem; border-radius: 10px; text-align: center; margin: 2rem 0;">
-        <h2 style="margin: 0 0 1rem 0;">Ready to Unlock Your $6.4M Opportunity?</h2>
+        <h2 style="margin: 0 0 1rem 0;">Ready to Unlock Your $5.2M Coffee Opportunity?</h2>
         <p style="margin: 0 0 1.5rem 0; opacity: 0.9;">
-            Full System: $12,000 (20% prototype credit) | Tier 1: $2,000/month<br>
+            Full System: $12,000 (50% prototype credit) | Tier 1: $2,000/month<br>
             Hourly updates • AI predictions • Action plans • ROI guarantee
         </p>
-        <a href="mailto:hello@corv.ai?subject=Full Build Request" style="text-decoration: none;">
+        <a href="mailto:hello@corv.ai?subject=BrewTech%20Build%20Request" style="text-decoration: none;">
             <button style="background: white; color: #1e3a8a; border: none; padding: 12px 32px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
                 Schedule Implementation
             </button>
