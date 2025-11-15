@@ -156,7 +156,7 @@ def create_gauge(value, title, min_val=0, max_val=100, color="#1e3a8a"):
             'axis': {'range': [min_val, max_val]},
             'bar': {'color': color},
             'steps': [
-                {'range': [min_val, max_val*0.7], 'color': "f8fafc"},
+                {'range': [min_val, max_val*0.7], 'color': "#f8fafc"},
                 {'range': [max_val*0.7, max_val*0.9], 'color': "#fef3c7"},
                 {'range': [max_val*0.9, max_val], 'color': "#dcfce7"}
             ],
@@ -378,4 +378,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
