@@ -168,13 +168,32 @@ def load_coffee_data():
         revenue_trend.append(round(rev, 2))
         
         # Churn: starts high, improves, then spikes
-        if i < 4:
-            churn = 0.045 - (i * 0.003)  # Improving initially
-        elif i in [7, 8]:  # Summer spike
-            churn = 0.032 + 0.012
-        else:
-            churn = 0.032 - ((i-8) * 0.001)  # Gradual improvement
-        churn_trend.append(round(churn, 3))
+        if i == 0:  # July baseline
+            churn = 0.042
+        elif i == 1:  # August spike (summer vacation = cafe closures)
+            churn = 0.058  # Big spike!
+        elif i == 2:  # September correction
+            churn = 0.048
+        elif i == 3:  # October improvement
+            churn = 0.039
+        elif i == 4:  # November stability
+            churn = 0.038
+        elif i == 5:  # December holiday spike
+            churn = 0.051  # Holiday closures
+        elif i == 6:  # January recovery
+            churn = 0.042
+        elif i == 7:  # February steady
+            churn = 0.041
+        elif i == 8:  # March small uptick
+            churn = 0.044
+        elif i == 9:  # April dip (renewals)
+            churn = 0.036
+        elif i == 10:  # May gradual rise
+            churn = 0.039
+        else:  # June pre-summer anxiety
+            churn = 0.043
+    
+    churn_trend.append(round(churn, 3))
     
     trend_data = pd.DataFrame({
         'Month': [d.strftime('%b %Y') for d in dates],
@@ -259,16 +278,26 @@ def main():
         st.plotly_chart(fig_rev, use_container_width=True)
         
         st.markdown('<div class="chart-header">Revenue vs Churn Trends</div>', unsafe_allow_html=True)
+        
         fig_trend = px.line(
             trend_data,
             x='Month',
             y=['Revenue', 'Churn'],
-            title='Monthly Performance (Note: Churn spikes in summer months)'
+            title='Monthly Performance: Revenue Growth vs Customer Churn'
         )
-        fig_trend.update_layout(height=300, yaxis=dict(tickformat=".1%"))
-        # Add annotation for churn spike
-        fig_trend.add_annotation(x="Aug 2023", y=0.044, text="Summer churn spike", 
-                                showarrow=True, arrowhead=1, arrowsize=1, arrowwidth=2)
+        
+        # Add realistic annotations
+        fig_trend.add_annotation(x="Aug 2023", y=0.058, text="Summer churn crisis", 
+                            showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=2, 
+                            font=dict(color="#dc2626"))
+        fig_trend.add_annotation(x="Dec 2023", y=0.051, text="Holiday impact", 
+                            showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=2,
+                            font=dict(color="#ef4444"))
+        fig_trend.add_annotation(x="Apr 2024", y=0.036, text="Best retention month", 
+                            showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=2,
+                            font=dict(color="#059669"))
+        
+        fig_trend.update_layout(height=300)
         st.plotly_chart(fig_trend, use_container_width=True)
     
     with col_right:
@@ -421,3 +450,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
